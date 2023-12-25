@@ -1,0 +1,107 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:16beta1-bullseye
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - "0.0.0.0:25432:5432" # for debug
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - observer_boilerplate
+
+  migrate:
+    container_name: pg-migrate
+    image: migrate/migrate:4
+    volumes:
+      - ./migrations:/migrations
+    command: ["-database", "postgres://$DB_USER:$DB_PASS@postgres_container:5432/$DB_NAME?sslmode=disable", "-path", "/migrations", "up"]
+    networks:
+      - observer_boilerplate
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  observer:
+    container_name: observer_container
+    image: observer:v0.0.1
+    environment:
+      - STORAGE_SVC_HOST=0.0.0.0
+      - STORAGE_SVC_PORT=9991
+      - JAEGER_HOST=0.0.0.0
+      - JAEGER_PORT=4318
+      - HTTP_SRV_HOST=0.0.0.0
+      - HTTP_SRV_PORT=1323
+      - STORAGE_CONN_STR=postgres://$DB_USER:$DB_PASS@postgres_container:5432/$DB_NAME?sslmode=disable
+    ports:
+      - 1323:1323
+    depends_on:
+      - migrate
+      - postgres
+    networks:
+      - observer_boilerplate
+    restart: on-failure:3
+
+  jaeger:
+    container_name: jaeger_container
+    image: jaegertracing/all-in-one
+    ports:
+      - "14268:14268"
+      - "16686:16686"
+    depends_on:
+      - postgres
+      - observer
+    networks:
+      - observer_boilerplate
+
+  # prometheus: 
+  #   image: prom/prometheus:latest
+  #   volumes:
+  #     - ./configs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml # todo копировать на сервер - доб в скрипт деплоя
+  #   container_name: prometheus
+  #   hostname: prometheus
+  #   command:
+  #     - --config.file=/etc/prometheus/prometheus.yaml
+  #   ports:
+  #     - 9090:9090
+  #   restart: unless-stopped
+  #   environment:
+  #     TZ: "Europe/Moscow"
+  #   networks:
+  #     - observer_boilerplate
+  #   depends_on:
+  #     backend:
+  #       condition: service_started
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   user: root # зачем?
+  #   ports:
+  #     - 3000:3000
+  #   volumes:
+  #     - ./grafana_tmp_data:/var/lib/grafana
+  #     - ./grafana_tmp_data/provisioning/:/etc/grafana/provisioning/
+  #   container_name: grafana
+  #   hostname: grafana
+  #   restart: unless-stopped
+  #   environment:
+  #     TZ: "Europe/Moscow"
+  #   networks:
+  #     - observer_boilerplate
+  #   depends_on:
+  #     prometheus:
+  #       condition: service_started
+
+networks:
+  observer_boilerplate:
+    driver: bridge

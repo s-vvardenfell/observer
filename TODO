@@ -1,0 +1,12 @@
+
+генерация по swagger или ген сваггера самого + на фронт
+
+мб не нужно сюда совать метрики
+    хотя логи на надо на чем-то протестить
+
+
+трейсинг
+https://devandchill.com/posts/2021/12/go-step-by-step-guide-for-implementing-tracing-on-a-microservices-architecture-1/2/
+метрики
+экспорт логов
+https://blog.logrocket.com/using-elasticsearch-logstash-and-kibana-with-go-applications/

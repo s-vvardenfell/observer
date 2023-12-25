@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - queries: "sqlc"
+    schema: "migrations"
+    engine: "postgresql"
+    gen:
+      go:
+        package: "storagedb"
+        out: "storagedb"

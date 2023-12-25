@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option go_package = "storageservice/";
+
+package storageservice;
+
+service StorageService {
+    rpc GetValue (GetValueRequest) returns (GetValueResponse) {}
+    rpc SetValue (SetValueRequest) returns (SetValueResponse) {}
+}
+
+message GetValueRequest {
+    int32 key = 1;
+} 
+
+message GetValueResponse {
+    string val = 1;
+}
+
+message SetValueRequest {
+    int32 key = 1;
+    string val = 2;
+} 
+
+message SetValueResponse {
+    bool ok = 1;
+} 
