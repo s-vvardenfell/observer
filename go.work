@@ -1,0 +1,8 @@
+go 1.20
+
+use (
+	./gateway
+	./storageservice
+	./tracer
+	./util
+)
