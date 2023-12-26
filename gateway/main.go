@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/s-vvardenfell/observer/tracer"
 	"github.com/s-vvardenfell/observer/util"
 
@@ -48,6 +49,8 @@ func main() {
 
 	echoInst := echo.New()
 	echoInst.Use(otelecho.Middleware("custom-http-tracer", otelecho.WithTracerProvider(tracer)))
+	echoInst.Use(middleware.Logger())
+	echoInst.Use(middleware.Recover())
 	echoInst.GET("/storage/:id", httpServ.GetValueById)
 	echoInst.POST("/storage", httpServ.AddValue)
 

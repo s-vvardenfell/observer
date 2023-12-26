@@ -59,6 +59,7 @@ func (serv *HttpServer) GetValueById(ctx echo.Context) error {
 	})
 
 	if err != nil {
+		serv.loggger.Error().Err(err).Msg("got err from stoage via grpc")
 		return ctx.JSON(http.StatusInternalServerError, "server error")
 	}
 

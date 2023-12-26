@@ -38,7 +38,7 @@ services:
     environment:
       - STORAGE_SVC_HOST=$STORAGE_SVC_HOST
       - STORAGE_SVC_PORT=$STORAGE_SVC_PORT
-      - JAEGER_GRPC_HOST=$JAEGER_GRPC_HOST
+      - JAEGER_GRPC_HOST=jaeger_container
       - JAEGER_GRPC_PORT=$JAEGER_GRPC_PORT
       - STORAGE_CONN_STR=postgres://$DB_USER:$DB_PASS@postgres_container:5432/$DB_NAME?sslmode=disable
     ports:
@@ -56,7 +56,7 @@ services:
     environment:
       - STORAGE_SVC_HOST=$STORAGE_SVC_HOST
       - STORAGE_SVC_PORT=$STORAGE_SVC_PORT
-      - JAEGER_HTTP_HOST=$JAEGER_HTTP_HOST
+      - JAEGER_HTTP_HOST=jaeger_container
       - JAEGER_HTTP_PORT=$JAEGER_HTTP_PORT
       - HTTP_SRV_HOST=$HTTP_SRV_HOST
       - HTTP_SRV_PORT=$HTTP_SRV_PORT
@@ -73,14 +73,17 @@ services:
     container_name: jaeger_container
     image: jaegertracing/all-in-one
     ports:
-      - "14268:14268"
-      - "16686:16686"
+      - 14268:14268
+      - 16686:16686
+      - $JAEGER_HTTP_PORT:4318  # for debug
+      - $JAEGER_GRPC_PORT:4317
     depends_on:
       - postgres
       - gateway
       - storage
     networks:
       - observer
+    restart: on-failure:3
 
   # prometheus: 
   #   image: prom/prometheus:latest
