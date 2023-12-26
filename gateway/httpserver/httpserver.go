@@ -27,7 +27,7 @@ func NewHttpServer(loggger *zerolog.Logger, storageClient storageservice.Storage
 	}, nil
 }
 
-func (serv *HttpServer) AddValue(ctx echo.Context) error {
+func (serv *HttpServer) GetValueById(ctx echo.Context) error {
 	id := ctx.Param("id")
 	if id == "" {
 		return ctx.JSON(http.StatusBadRequest, "empty id")
@@ -69,6 +69,6 @@ func (serv *HttpServer) AddValue(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resp.Val)
 }
 
-func (serv *HttpServer) GetValueById(ctx echo.Context) error {
+func (serv *HttpServer) AddValue(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "id")
 }

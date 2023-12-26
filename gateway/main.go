@@ -23,8 +23,8 @@ func main() {
 	logger := zerolog.New(os.Stdout).Level(zerolog.InfoLevel).With().Timestamp().Logger()
 
 	tracer, err := tracer.InitHttpTracer(context.Background(), "custom-http-tracer", fmt.Sprintf("%s:%s",
-		util.CheckEnv("JAEGER_HOST", "127.0.0.1"),
-		util.CheckEnv("JAEGER_PORT", "4318")))
+		util.CheckEnv("JAEGER_HTTP_HOST", "127.0.0.1"),
+		util.CheckEnv("JAEGER_HTTP_PORT", "4318")))
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}

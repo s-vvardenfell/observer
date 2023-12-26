@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
     ports:
-      - "0.0.0.0:25432:5432" # for debug
+      - 25432:5432 # for debug
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
@@ -18,38 +18,55 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - observer_boilerplate
+      - observer
 
   migrate:
     container_name: pg-migrate
     image: migrate/migrate:4
     volumes:
-      - ./migrations:/migrations
+      - ./storageservice/migrations:/migrations
     command: ["-database", "postgres://$DB_USER:$DB_PASS@postgres_container:5432/$DB_NAME?sslmode=disable", "-path", "/migrations", "up"]
     networks:
-      - observer_boilerplate
+      - observer
     depends_on:
       postgres:
         condition: service_healthy
 
-  observer:
-    container_name: observer_container
-    image: observer:v0.0.1
+  storage:
+    container_name: storageservice_container
+    image: observer_storageservice:latest
     environment:
-      - STORAGE_SVC_HOST=0.0.0.0
-      - STORAGE_SVC_PORT=9991
-      - JAEGER_HOST=0.0.0.0
-      - JAEGER_PORT=4318
-      - HTTP_SRV_HOST=0.0.0.0
-      - HTTP_SRV_PORT=1323
+      - STORAGE_SVC_HOST=$STORAGE_SVC_HOST
+      - STORAGE_SVC_PORT=$STORAGE_SVC_PORT
+      - JAEGER_GRPC_HOST=$JAEGER_GRPC_HOST
+      - JAEGER_GRPC_PORT=$JAEGER_GRPC_PORT
       - STORAGE_CONN_STR=postgres://$DB_USER:$DB_PASS@postgres_container:5432/$DB_NAME?sslmode=disable
     ports:
-      - 1323:1323
+      - $STORAGE_SVC_PORT:$STORAGE_SVC_PORT
     depends_on:
       - migrate
       - postgres
     networks:
-      - observer_boilerplate
+      - observer
+    restart: on-failure:3
+
+  gateway:
+    container_name: gateway_container
+    image: observer_gateway:latest
+    environment:
+      - STORAGE_SVC_HOST=$STORAGE_SVC_HOST
+      - STORAGE_SVC_PORT=$STORAGE_SVC_PORT
+      - JAEGER_HTTP_HOST=$JAEGER_HTTP_HOST
+      - JAEGER_HTTP_PORT=$JAEGER_HTTP_PORT
+      - HTTP_SRV_HOST=$HTTP_SRV_HOST
+      - HTTP_SRV_PORT=$HTTP_SRV_PORT
+    ports:
+      - $HTTP_SRV_PORT:$HTTP_SRV_PORT
+    depends_on:
+      - migrate
+      - postgres
+    networks:
+      - observer
     restart: on-failure:3
 
   jaeger:
@@ -60,9 +77,10 @@ services:
       - "16686:16686"
     depends_on:
       - postgres
-      - observer
+      - gateway
+      - storage
     networks:
-      - observer_boilerplate
+      - observer
 
   # prometheus: 
   #   image: prom/prometheus:latest
@@ -78,7 +96,7 @@ services:
   #   environment:
   #     TZ: "Europe/Moscow"
   #   networks:
-  #     - observer_boilerplate
+  #     - observer
   #   depends_on:
   #     backend:
   #       condition: service_started
@@ -97,11 +115,11 @@ services:
   #   environment:
   #     TZ: "Europe/Moscow"
   #   networks:
-  #     - observer_boilerplate
+  #     - observer
   #   depends_on:
   #     prometheus:
   #       condition: service_started
 
 networks:
-  observer_boilerplate:
+  observer:
     driver: bridge

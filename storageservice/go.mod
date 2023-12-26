@@ -3,6 +3,7 @@ module github.com/s-vvardenfell/observer/storageservice
 go 1.20
 
 require (
+	github.com/lib/pq v1.10.9
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.31.0
 	github.com/s-vvardenfell/observer/tracer v0.0.0-20231226140911-ae2cea1ad378

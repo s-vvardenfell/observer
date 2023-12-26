@@ -20,8 +20,8 @@ func main() {
 	logger := zerolog.New(os.Stdout).Level(zerolog.InfoLevel).With().Timestamp().Logger()
 
 	tracer, err := tracer.InitGrpcTracer(context.Background(), "custom-grpc-tracer", fmt.Sprintf("%s:%s",
-		util.CheckEnv("JAEGER_HOST", "127.0.0.1"),
-		util.CheckEnv("JAEGER_PORT", "4317")))
+		util.CheckEnv("JAEGER_GRPC_HOST", "127.0.0.1"),
+		util.CheckEnv("JAEGER_GRPC_PORT", "4317")))
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
