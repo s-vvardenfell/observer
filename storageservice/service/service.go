@@ -2,7 +2,8 @@ package storageservice
 
 import (
 	"context"
-	"test_tracing/storagedb"
+
+	"github.com/s-vvardenfell/observer/storageservice/storagedb"
 
 	"github.com/pkg/errors"
 
