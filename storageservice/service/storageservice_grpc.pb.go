@@ -19,16 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	StorageService_GetValue_FullMethodName = "/storageservice.StorageService/GetValue"
-	StorageService_SetValue_FullMethodName = "/storageservice.StorageService/SetValue"
+	StorageService_GetBookById_FullMethodName = "/storageservice.StorageService/GetBookById"
+	StorageService_AddBook_FullMethodName     = "/storageservice.StorageService/AddBook"
 )
 
 // StorageServiceClient is the client API for StorageService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StorageServiceClient interface {
-	GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error)
-	SetValue(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error)
+	GetBookById(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error)
+	AddBook(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error)
 }
 
 type storageServiceClient struct {
@@ -39,18 +39,18 @@ func NewStorageServiceClient(cc grpc.ClientConnInterface) StorageServiceClient {
 	return &storageServiceClient{cc}
 }
 
-func (c *storageServiceClient) GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error) {
+func (c *storageServiceClient) GetBookById(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error) {
 	out := new(GetValueResponse)
-	err := c.cc.Invoke(ctx, StorageService_GetValue_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, StorageService_GetBookById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *storageServiceClient) SetValue(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error) {
+func (c *storageServiceClient) AddBook(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error) {
 	out := new(SetValueResponse)
-	err := c.cc.Invoke(ctx, StorageService_SetValue_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, StorageService_AddBook_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +61,8 @@ func (c *storageServiceClient) SetValue(ctx context.Context, in *SetValueRequest
 // All implementations must embed UnimplementedStorageServiceServer
 // for forward compatibility
 type StorageServiceServer interface {
-	GetValue(context.Context, *GetValueRequest) (*GetValueResponse, error)
-	SetValue(context.Context, *SetValueRequest) (*SetValueResponse, error)
+	GetBookById(context.Context, *GetValueRequest) (*GetValueResponse, error)
+	AddBook(context.Context, *SetValueRequest) (*SetValueResponse, error)
 	mustEmbedUnimplementedStorageServiceServer()
 }
 
@@ -70,11 +70,11 @@ type StorageServiceServer interface {
 type UnimplementedStorageServiceServer struct {
 }
 
-func (UnimplementedStorageServiceServer) GetValue(context.Context, *GetValueRequest) (*GetValueResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetValue not implemented")
+func (UnimplementedStorageServiceServer) GetBookById(context.Context, *GetValueRequest) (*GetValueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBookById not implemented")
 }
-func (UnimplementedStorageServiceServer) SetValue(context.Context, *SetValueRequest) (*SetValueResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetValue not implemented")
+func (UnimplementedStorageServiceServer) AddBook(context.Context, *SetValueRequest) (*SetValueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddBook not implemented")
 }
 func (UnimplementedStorageServiceServer) mustEmbedUnimplementedStorageServiceServer() {}
 
@@ -89,38 +89,38 @@ func RegisterStorageServiceServer(s grpc.ServiceRegistrar, srv StorageServiceSer
 	s.RegisterService(&StorageService_ServiceDesc, srv)
 }
 
-func _StorageService_GetValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _StorageService_GetBookById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetValueRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StorageServiceServer).GetValue(ctx, in)
+		return srv.(StorageServiceServer).GetBookById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StorageService_GetValue_FullMethodName,
+		FullMethod: StorageService_GetBookById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServiceServer).GetValue(ctx, req.(*GetValueRequest))
+		return srv.(StorageServiceServer).GetBookById(ctx, req.(*GetValueRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StorageService_SetValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _StorageService_AddBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetValueRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StorageServiceServer).SetValue(ctx, in)
+		return srv.(StorageServiceServer).AddBook(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StorageService_SetValue_FullMethodName,
+		FullMethod: StorageService_AddBook_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServiceServer).SetValue(ctx, req.(*SetValueRequest))
+		return srv.(StorageServiceServer).AddBook(ctx, req.(*SetValueRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -133,12 +133,12 @@ var StorageService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*StorageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetValue",
-			Handler:    _StorageService_GetValue_Handler,
+			MethodName: "GetBookById",
+			Handler:    _StorageService_GetBookById_Handler,
 		},
 		{
-			MethodName: "SetValue",
-			Handler:    _StorageService_SetValue_Handler,
+			MethodName: "AddBook",
+			Handler:    _StorageService_AddBook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
