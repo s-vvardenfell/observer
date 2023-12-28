@@ -5,10 +5,11 @@ go 1.20
 require (
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/rs/zerolog v1.31.0
-	github.com/s-vvardenfell/observer/storageservice v0.0.0-20231226140911-ae2cea1ad378
+	github.com/s-vvardenfell/observer/storageservice v0.0.0-20231228172043-2105d1b3100f
 	github.com/s-vvardenfell/observer/tracer v0.0.0-20231226140911-ae2cea1ad378
 	github.com/s-vvardenfell/observer/util v0.0.0-20231226140911-ae2cea1ad378
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.46.1
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/sdk v1.21.0
 	go.opentelemetry.io/otel/trace v1.21.0
@@ -23,6 +24,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

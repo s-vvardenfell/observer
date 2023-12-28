@@ -1,5 +1,4 @@
 
-
 генерация по swagger или ген сваггера самого + на фронт
 возвращать в хедере gateway trace_id
 все данные возвращать в ответе из бд, а не только "title"
@@ -19,3 +18,13 @@ https://devandchill.com/posts/2021/12/go-step-by-step-guide-for-implementing-tra
 метрики
 экспорт логов
 https://blog.logrocket.com/using-elasticsearch-logstash-and-kibana-with-go-applications/
+
+
+
+curl -X POST "http://127.0.0.1:1323/storage" --header 'Content-Type: application/json' --data-raw '{
+  "title": "TEST_TITLE",
+  "author": "TEST_NAME",
+  "price": 1.23,
+  "description": "TEST_DESCR",
+  "author_bio": "TEST_BIO"
+}'

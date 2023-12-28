@@ -16,25 +16,39 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
 	logger := zerolog.New(os.Stdout).Level(zerolog.InfoLevel).With().Timestamp().Logger()
+	bgCtx := context.Background()
 
-	tracer, err := tracer.InitHttpTracer(context.Background(), "custom-http-tracer", fmt.Sprintf("%s:%s",
+	tracer, err := tracer.InitHttpTracer(bgCtx, "http-tracer", fmt.Sprintf("%s:%s",
 		util.CheckEnv("JAEGER_HTTP_HOST", "127.0.0.1"),
 		util.CheckEnv("JAEGER_HTTP_PORT", "4318")))
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
 
+	defer func() {
+		if err := tracer.Shutdown(bgCtx); err != nil {
+			logger.Fatal().Err(err).Msg("failed to shutting down tracer provider")
+		}
+	}()
+
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s:%s",
 			util.CheckEnv("STORAGE_SVC_HOST", "127.0.0.1"),
 			util.CheckEnv("STORAGE_SVC_PORT", "9991")),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler(
+			// otelgrpc.WithMessageEvents(),
+			// otelgrpc.WithSpanOptions(),
+			otelgrpc.WithTracerProvider(tracer),
+		)),
+	)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to listen grpc-server")
@@ -48,7 +62,7 @@ func main() {
 	}
 
 	echoInst := echo.New()
-	echoInst.Use(otelecho.Middleware("custom-http-tracer", otelecho.WithTracerProvider(tracer)))
+	echoInst.Use(otelecho.Middleware("http-tracer", otelecho.WithTracerProvider(tracer)))
 	echoInst.Use(middleware.Logger())
 	echoInst.Use(middleware.Recover())
 	echoInst.GET("/storage/:id", httpServ.GetValueById)

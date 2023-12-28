@@ -1,10 +1,12 @@
 package httpserver
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	storageservice "github.com/s-vvardenfell/observer/storageservice/service"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
@@ -35,7 +37,7 @@ func (serv *HttpServer) GetValueById(ctx echo.Context) error {
 
 	// ----------------------tracing----------------------
 	// track name - usually package or component name
-	spanCtx, span := serv.tracer.Tracer("httpserver").Start(
+	spanCtx, span := serv.tracer.Tracer("http-tracer").Start(
 		ctx.Request().Context(),
 		"GetValueById", // operation name - usually func name
 		trace.WithAttributes(
@@ -48,12 +50,19 @@ func (serv *HttpServer) GetValueById(ctx echo.Context) error {
 	defer span.End()
 	// ---------------------------------------------------
 
+	fmt.Println(span.SpanContext().TraceID().String())
+	fmt.Println(span.SpanContext().SpanID().String())
+
+	traceId := span.SpanContext().TraceID().String()
+	// traceId := fmt.Sprintf("%s", span.SpanContext().TraceID())
+	distCtx := metadata.AppendToOutgoingContext(spanCtx, "x-trace-id", traceId)
+
 	idNum, err := strconv.Atoi(id)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, "wrong id format")
 	}
 
-	resp, err := serv.storageClient.GetBookById(spanCtx, &storageservice.GetValueRequest{
+	resp, err := serv.storageClient.GetBookById(distCtx, &storageservice.GetValueRequest{
 		Id: int32(idNum),
 	})
 
@@ -76,8 +85,7 @@ func (serv *HttpServer) GetValueById(ctx echo.Context) error {
 
 func (serv *HttpServer) AddValue(ctx echo.Context) error {
 	// ----------------------tracing----------------------
-	spanCtx, span := serv.tracer.Tracer("httpserver").Start(
-		// spanCtx,
+	spanCtx, span := serv.tracer.Tracer("http-tracer").Start(
 		ctx.Request().Context(),
 		"AddValue",
 	)
