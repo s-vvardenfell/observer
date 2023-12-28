@@ -14,14 +14,14 @@ import (
 )
 
 type HttpServer struct {
-	loggger       *zerolog.Logger
+	logger        *zerolog.Logger
 	tracer        *tracesdk.TracerProvider
 	storageClient storageservice.StorageServiceClient
 }
 
 func NewHttpServer(loggger *zerolog.Logger, storageClient storageservice.StorageServiceClient, tracer *tracesdk.TracerProvider) (*HttpServer, error) {
 	return &HttpServer{
-		loggger:       loggger,
+		logger:        loggger,
 		tracer:        tracer,
 		storageClient: storageClient,
 	}, nil
@@ -36,9 +36,8 @@ func (serv *HttpServer) GetValueById(ctx echo.Context) error {
 	// ----------------------tracing----------------------
 	// track name - usually package or component name
 	spanCtx, span := serv.tracer.Tracer("httpserver").Start(
-		// spanCtx,
 		ctx.Request().Context(),
-		"AddValue", // operation name - usually func name
+		"GetValueById", // operation name - usually func name
 		trace.WithAttributes(
 			attribute.KeyValue{
 				Key:   attribute.Key("id"),
@@ -54,22 +53,57 @@ func (serv *HttpServer) GetValueById(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, "wrong id format")
 	}
 
-	resp, err := serv.storageClient.GetValue(spanCtx, &storageservice.GetValueRequest{
-		Key: int32(idNum),
+	resp, err := serv.storageClient.GetBookById(spanCtx, &storageservice.GetValueRequest{
+		Id: int32(idNum),
 	})
 
 	if err != nil {
-		serv.loggger.Error().Err(err).Msg("got err from stoage via grpc")
-		return ctx.JSON(http.StatusInternalServerError, "server error")
+		serv.logger.Error().Err(err).Msg("got err from stoage via grpc")
+		return ctx.JSON(http.StatusInternalServerError, "Server error")
 	}
 
-	if resp.Val == "" {
-		return ctx.JSON(http.StatusNoContent, "")
-	}
-
-	return ctx.JSON(http.StatusOK, resp.Val)
+	return ctx.JSON(http.StatusOK, Book{
+		BookID: resp.Id,
+		BookToAdd: BookToAdd{
+			Title:       resp.Title,
+			Author:      resp.Author,
+			Price:       float64(resp.Price),
+			Description: resp.Description,
+			AuthorBio:   resp.AuthorBio,
+		},
+	})
 }
 
 func (serv *HttpServer) AddValue(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, "id")
+	// ----------------------tracing----------------------
+	spanCtx, span := serv.tracer.Tracer("httpserver").Start(
+		// spanCtx,
+		ctx.Request().Context(),
+		"AddValue",
+	)
+	defer span.End()
+	// ---------------------------------------------------
+
+	var value BookToAdd
+
+	err := ctx.Bind(&value)
+	if err != nil {
+		serv.logger.Error().Err(err).Msg("cannot bind request body with ValueToAdd struct")
+		return ctx.JSON(http.StatusInternalServerError, "Server error")
+	}
+
+	resp, err := serv.storageClient.AddBook(spanCtx, &storageservice.SetValueRequest{
+		Title:       value.Title,
+		Author:      value.Author,
+		Price:       float32(value.Price),
+		Description: value.Description,
+		AuthorBio:   value.AuthorBio,
+	})
+
+	if err != nil {
+		serv.logger.Error().Err(err).Msg("got err from stoage via grpc")
+		return ctx.JSON(http.StatusInternalServerError, "Server error")
+	}
+
+	return ctx.JSON(http.StatusOK, resp.Id)
 }

@@ -54,7 +54,7 @@ services:
     container_name: gateway_container
     image: observer_gateway:latest
     environment:
-      - STORAGE_SVC_HOST=$STORAGE_SVC_HOST
+      - STORAGE_SVC_HOST=storageservice_container
       - STORAGE_SVC_PORT=$STORAGE_SVC_PORT
       - JAEGER_HTTP_HOST=jaeger_container
       - JAEGER_HTTP_PORT=$JAEGER_HTTP_PORT

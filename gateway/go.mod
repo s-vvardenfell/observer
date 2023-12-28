@@ -3,7 +3,6 @@ module github.com/s-vvardenfell/observer/gateway
 go 1.20
 
 require (
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/rs/zerolog v1.31.0
 	github.com/s-vvardenfell/observer/storageservice v0.0.0-20231226140911-ae2cea1ad378
@@ -18,7 +17,6 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
