@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "storageservice/";
+
+package storageservice;
+
+service StorageService {
+    rpc GetBookById (GetValueRequest) returns (GetValueResponse) {}
+    rpc AddBook (SetValueRequest) returns (SetValueResponse) {}
+}
+
+message GetValueRequest {
+    int32 id = 1;
+} 
+
+message GetValueResponse {
+    int32 id = 1;
+    string title = 2;
+	string author = 3;
+	float price = 4;
+	string description = 5;
+	string author_bio = 6;
+}
+
+message SetValueRequest {
+    string title = 1;
+	string author = 2;
+	float price = 3;
+	string description = 4;
+	string author_bio = 5;
+} 
+
+message SetValueResponse {
+    int32 id = 1;
+} 
