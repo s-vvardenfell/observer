@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/s-vvardenfell/observer/util"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 
 	"github.com/s-vvardenfell/observer/tracer"
 
@@ -18,13 +19,20 @@ import (
 
 func main() {
 	logger := zerolog.New(os.Stdout).Level(zerolog.InfoLevel).With().Timestamp().Logger()
+	bgCtx := context.Background()
 
-	tracer, err := tracer.InitGrpcTracer(context.Background(), "custom-grpc-tracer", fmt.Sprintf("%s:%s",
+	tracer, err := tracer.InitGrpcTracer(bgCtx, "grpc-tracer", fmt.Sprintf("%s:%s",
 		util.CheckEnv("JAEGER_GRPC_HOST", "127.0.0.1"),
 		util.CheckEnv("JAEGER_GRPC_PORT", "4317")))
 	if err != nil {
 		logger.Fatal().Err(err).Send()
 	}
+
+	defer func() {
+		if err := tracer.Shutdown(bgCtx); err != nil {
+			logger.Fatal().Err(err).Msg("failed to shutting down tracer provider")
+		}
+	}()
 
 	storSvc, err := storageservice.NewStorageService(storageservice.StorageServiceOpts{
 		Tracer:     tracer,
@@ -43,7 +51,13 @@ func main() {
 		logger.Fatal().Err(err).Msg("failed to listen for storage service")
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler(
+			// otelgrpc.WithMessageEvents(),
+			// otelgrpc.WithSpanOptions(),
+			otelgrpc.WithTracerProvider(tracer),
+		)),
+	)
 
 	storageservice.RegisterStorageServiceServer(grpcServer, storSvc)
 

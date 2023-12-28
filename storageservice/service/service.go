@@ -5,11 +5,13 @@ import (
 	"database/sql"
 
 	"github.com/s-vvardenfell/observer/storageservice/storagedb"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/pkg/errors"
 
 	"github.com/rs/zerolog"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -43,6 +45,37 @@ func NewStorageService(opts StorageServiceOpts) (*StorageService, error) {
 }
 
 func (serv *StorageService) GetBookById(ctx context.Context, req *GetValueRequest) (*GetValueResponse, error) {
+	// spanCtx, span := serv.tracer.Tracer("grpc-tracer").Start(
+	// 	ctx,
+	// 	"GetBookById",
+	// )
+	// defer span.End()
+
+	//-----------------------------------------
+	// Extract TraceID from header
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		var span trace.Span
+
+		traceIdString := md["x-trace-id"][0]
+		// Convert string to byte array
+		traceId, err := trace.TraceIDFromHex(traceIdString)
+		if err != nil {
+			return nil, err
+		}
+		// Creating a span context with a predefined trace-id
+		spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+			TraceID: traceId,
+		})
+		// Embedding span config into the context
+		ctx = trace.ContextWithSpanContext(ctx, spanContext)
+
+		ctx, span = serv.tracer.Tracer("grpc-tracer").Start(ctx, "GetBookById")
+		defer span.End()
+	}
+
+	//-----------------------------------------
+
 	data, err := serv.dbHandler.Queries.GetBookById(ctx, req.Id)
 	if err != nil {
 		return nil, errors.Wrap(err, "got err from sql db")
@@ -59,6 +92,35 @@ func (serv *StorageService) GetBookById(ctx context.Context, req *GetValueReques
 }
 
 func (serv *StorageService) AddBook(ctx context.Context, req *SetValueRequest) (*SetValueResponse, error) {
+	// spanCtx, span := serv.tracer.Tracer("grpc-tracer").Start(
+	// 	ctx,
+	// 	"AddBook",
+	// )
+	// defer span.End()
+	//-----------------------------------------
+	// Extract TraceID from header
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		var span trace.Span
+
+		traceIdString := md["x-trace-id"][0]
+		// Convert string to byte array
+		traceId, err := trace.TraceIDFromHex(traceIdString)
+		if err != nil {
+			return nil, err
+		}
+		// Creating a span context with a predefined trace-id
+		spanContext := trace.NewSpanContext(trace.SpanContextConfig{
+			TraceID: traceId,
+		})
+		// Embedding span config into the context
+		ctx = trace.ContextWithSpanContext(ctx, spanContext)
+
+		ctx, span = serv.tracer.Tracer("grpc-tracer").Start(ctx, "AddBook")
+		defer span.End()
+	}
+	//-----------------------------------------
+
 	id, err := serv.dbHandler.Queries.InsertBook(ctx, storagedb.InsertBookParams{
 		Title:       req.Title,
 		Author:      req.Author,
