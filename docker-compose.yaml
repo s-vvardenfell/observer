@@ -60,6 +60,8 @@ services:
       - JAEGER_HTTP_PORT=$JAEGER_HTTP_PORT
       - HTTP_SRV_HOST=$HTTP_SRV_HOST
       - HTTP_SRV_PORT=$HTTP_SRV_PORT
+      - PROM_HOST=$PROM_HOST
+      - PROM_PORT=$PROM_PORT
     ports:
       - $HTTP_SRV_PORT:$HTTP_SRV_PORT
     depends_on:
@@ -69,59 +71,110 @@ services:
       - observer
     restart: on-failure:3
 
-  jaeger:
-    container_name: jaeger_container
-    image: jaegertracing/all-in-one
-    ports:
-      - 14268:14268
-      - 16686:16686
-      - $JAEGER_HTTP_PORT:4318  # for debug
-      - $JAEGER_GRPC_PORT:4317
-    depends_on:
-      - postgres
-      - gateway
-      - storage
+  # jaeger-collector:
+  #   image: jaegertracing/jaeger-collector
+  #   command: 
+  #     - "--cassandra.keyspace=jaeger_v1_dc1"
+  #     - "--cassandra.servers=cassandra"
+  #     - "--collector.zipkin.host-port=9411"
+  #     - "--sampling.initial-sampling-probability=.5"
+  #     - "--sampling.target-samples-per-second=.01"
+  #   environment: 
+  #      - SAMPLING_CONFIG_TYPE=adaptive
+  #   ports:
+  #     - "14269:14269"
+  #     - "14268:14268"
+  #     # - "14250"
+  #     - "9411:9411"
+  #   restart: on-failure
+  #   depends_on:
+  #     - cassandra-schema
+
+  # jaeger-query:
+  #   image: jaegertracing/jaeger-query
+  #   command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
+  #   ports:
+  #     - "16686:16686"
+  #     # - "16687"
+  #   restart: on-failure
+  #   depends_on:
+  #     - jaeger-collector
+  #     - cassandra-schema
+
+  # jaeger-agent:
+  #   image: jaegertracing/jaeger-agent
+  #   command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
+  #   ports:
+  #     - "5775:5775/udp"
+  #     - "6831:6831/udp"
+  #     - "6832:6832/udp"
+  #     - "5778:5778"
+  #   restart: on-failure
+  #   depends_on:
+  #     - jaeger-collector
+  #     - cassandra-schema
+
+  # cassandra:
+  #   image: cassandra:4.0
+  #   depends_on:
+  #     - postgres
+
+  # cassandra-schema:
+  #   image: jaegertracing/jaeger-cassandra-schema
+  #   depends_on:
+  #     - cassandra
+
+  prometheus: 
+    image: prom/prometheus:latest
+    volumes:
+      - ./configs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+    container_name: prometheus_container
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+    # ports:
+    #   - 9090:9090
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Moscow"
     networks:
       - observer
-    restart: on-failure:3
+    depends_on:
+       - storage
+       - gateway
 
-  # prometheus: 
-  #   image: prom/prometheus:latest
-  #   volumes:
-  #     - ./configs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml # todo копировать на сервер - доб в скрипт деплоя
-  #   container_name: prometheus
-  #   hostname: prometheus
-  #   command:
-  #     - --config.file=/etc/prometheus/prometheus.yaml
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    # volumes:
+    #   - ./grafana_tmp_data:/var/lib/grafana
+    #   - ./grafana_tmp_data/provisioning/:/etc/grafana/provisioning/
+    container_name: grafana
+    hostname: grafana
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Moscow"
+    networks:
+      - observer
+    depends_on:
+      prometheus:
+        condition: service_started
+
+  # jaeger:
+  #   container_name: jaeger_container
+  #   image: jaegertracing/all-in-one
   #   ports:
-  #     - 9090:9090
-  #   restart: unless-stopped
-  #   environment:
-  #     TZ: "Europe/Moscow"
+  #     - 14268:14268
+  #     - 16686:16686
+  #     - $JAEGER_HTTP_PORT:4318  # for debug
+  #     - $JAEGER_GRPC_PORT:4317
+  #   depends_on:
+  #     - postgres
+  #     - gateway
+  #     - storage
   #   networks:
   #     - observer
-  #   depends_on:
-  #     backend:
-  #       condition: service_started
-
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   user: root # зачем?
-  #   ports:
-  #     - 3000:3000
-  #   volumes:
-  #     - ./grafana_tmp_data:/var/lib/grafana
-  #     - ./grafana_tmp_data/provisioning/:/etc/grafana/provisioning/
-  #   container_name: grafana
-  #   hostname: grafana
-  #   restart: unless-stopped
-  #   environment:
-  #     TZ: "Europe/Moscow"
-  #   networks:
-  #     - observer
-  #   depends_on:
-  #     prometheus:
-  #       condition: service_started
+  #   restart: on-failure:3
 
 networks:
   observer:

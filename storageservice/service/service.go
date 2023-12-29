@@ -45,13 +45,6 @@ func NewStorageService(opts StorageServiceOpts) (*StorageService, error) {
 }
 
 func (serv *StorageService) GetBookById(ctx context.Context, req *GetValueRequest) (*GetValueResponse, error) {
-	// spanCtx, span := serv.tracer.Tracer("grpc-tracer").Start(
-	// 	ctx,
-	// 	"GetBookById",
-	// )
-	// defer span.End()
-
-	//-----------------------------------------
 	// Extract TraceID from header
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
@@ -92,12 +85,6 @@ func (serv *StorageService) GetBookById(ctx context.Context, req *GetValueReques
 }
 
 func (serv *StorageService) AddBook(ctx context.Context, req *SetValueRequest) (*SetValueResponse, error) {
-	// spanCtx, span := serv.tracer.Tracer("grpc-tracer").Start(
-	// 	ctx,
-	// 	"AddBook",
-	// )
-	// defer span.End()
-	//-----------------------------------------
 	// Extract TraceID from header
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
