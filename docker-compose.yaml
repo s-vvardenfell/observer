@@ -185,6 +185,56 @@ services:
       - observer
     restart: on-failure:3
 
+  elasticsearch:
+    image: elasticsearch:7.6.2
+    volumes:
+     - ./configs/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "http://localhost:9200/_cat/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    ports:
+      - 9200:9200
+    networks:
+      - observer
+
+  logstash:
+    image: logstash:7.6.2
+    volumes:
+      - ./configs/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - observer
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:6.5.1
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./configs/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./logs/:/logs/
+    networks:
+      - observer
+
+  kibana:
+    image: kibana:7.6.2
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "http://localhost:5601/api/status"]
+      interval: 3s
+      timeout: 3s
+      retries: 50
+    ports:
+      - 5601:5601
+    networks:
+      - observer
+
 networks:
   observer:
     driver: bridge
