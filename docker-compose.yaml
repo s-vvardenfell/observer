@@ -38,7 +38,7 @@ services:
     environment:
       - STORAGE_SVC_HOST=$STORAGE_SVC_HOST
       - STORAGE_SVC_PORT=$STORAGE_SVC_PORT
-      - JAEGER_GRPC_HOST=jaeger_container
+      - JAEGER_GRPC_HOST=jaeger_agent_container
       - JAEGER_GRPC_PORT=$JAEGER_GRPC_PORT
       - STORAGE_CONN_STR=postgres://$DB_USER:$DB_PASS@postgres_container:5432/$DB_NAME?sslmode=disable
     ports:
@@ -56,7 +56,7 @@ services:
     environment:
       - STORAGE_SVC_HOST=storageservice_container
       - STORAGE_SVC_PORT=$STORAGE_SVC_PORT
-      - JAEGER_HTTP_HOST=jaeger_container
+      - JAEGER_HTTP_HOST=jaeger_agent_container
       - JAEGER_HTTP_PORT=$JAEGER_HTTP_PORT
       - HTTP_SRV_HOST=$HTTP_SRV_HOST
       - HTTP_SRV_PORT=$HTTP_SRV_PORT
@@ -84,25 +84,30 @@ services:
   #   ports:
   #     - "14269:14269"
   #     - "14268:14268"
-  #     # - "14250"
+  #     - "14250"
   #     - "9411:9411"
   #   restart: on-failure
   #   depends_on:
   #     - cassandra-schema
+  #   networks:
+  #     - observer
 
   # jaeger-query:
   #   image: jaegertracing/jaeger-query
   #   command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
   #   ports:
   #     - "16686:16686"
-  #     # - "16687"
+  #     - "16687"
   #   restart: on-failure
   #   depends_on:
   #     - jaeger-collector
   #     - cassandra-schema
+  #   networks:
+  #     - observer
 
   # jaeger-agent:
   #   image: jaegertracing/jaeger-agent
+  #   container_name: jaeger_agent_container
   #   command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
   #   ports:
   #     - "5775:5775/udp"
@@ -113,68 +118,72 @@ services:
   #   depends_on:
   #     - jaeger-collector
   #     - cassandra-schema
+  #   networks:
+  #     - observer
 
   # cassandra:
   #   image: cassandra:4.0
-  #   depends_on:
-  #     - postgres
+  #   networks:
+  #     - observer
 
   # cassandra-schema:
   #   image: jaegertracing/jaeger-cassandra-schema
   #   depends_on:
   #     - cassandra
-
-  prometheus: 
-    image: prom/prometheus:latest
-    volumes:
-      - ./configs/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
-    container_name: prometheus_container
-    command:
-      - --config.file=/etc/prometheus/prometheus.yaml
-    # ports:
-    #   - 9090:9090
-    restart: unless-stopped
-    environment:
-      TZ: "Europe/Moscow"
-    networks:
-      - observer
-    depends_on:
-       - storage
-       - gateway
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - 3000:3000
-    # volumes:
-    #   - ./grafana_tmp_data:/var/lib/grafana
-    #   - ./grafana_tmp_data/provisioning/:/etc/grafana/provisioning/
-    container_name: grafana
-    hostname: grafana
-    restart: unless-stopped
-    environment:
-      TZ: "Europe/Moscow"
-    networks:
-      - observer
-    depends_on:
-      prometheus:
-        condition: service_started
-
-  # jaeger:
-  #   container_name: jaeger_container
-  #   image: jaegertracing/all-in-one
-  #   ports:
-  #     - 14268:14268
-  #     - 16686:16686
-  #     - $JAEGER_HTTP_PORT:4318  # for debug
-  #     - $JAEGER_GRPC_PORT:4317
-  #   depends_on:
-  #     - postgres
-  #     - gateway
-  #     - storage
   #   networks:
   #     - observer
-  #   restart: on-failure:3
+
+  # prometheus: 
+  #   image: prom/prometheus:latest
+  #   volumes:
+  #     - ./configs/prometheus.yaml:/etc/prometheus/prometheus.yaml
+  #   container_name: prometheus_container
+  #   command:
+  #     - --config.file=/etc/prometheus/prometheus.yaml
+  #   # ports:
+  #   #   - 9090:9090
+  #   restart: unless-stopped
+  #   environment:
+  #     TZ: "Europe/Moscow"
+  #   networks:
+  #     - observer
+  #   depends_on:
+  #      - storage
+  #      - gateway
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ports:
+  #     - 3000:3000
+  #   # volumes:
+  #   #   - ./grafana_tmp_data:/var/lib/grafana
+  #   #   - ./grafana_tmp_data/provisioning/:/etc/grafana/provisioning/
+  #   container_name: grafana
+  #   hostname: grafana
+  #   restart: unless-stopped
+  #   environment:
+  #     TZ: "Europe/Moscow"
+  #   networks:
+  #     - observer
+  #   depends_on:
+  #     prometheus:
+  #       condition: service_started
+
+  jaeger:
+    container_name: jaeger_agent_container
+    image: jaegertracing/all-in-one
+    ports:
+      - 14268:14268
+      - 16686:16686
+      - $JAEGER_HTTP_PORT:4318  # for debug
+      - $JAEGER_GRPC_PORT:4317
+    depends_on:
+      - postgres
+      - gateway
+      - storage
+    networks:
+      - observer
+    restart: on-failure:3
 
 networks:
   observer:

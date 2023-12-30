@@ -24,7 +24,17 @@ import (
 )
 
 func main() {
-	logger := zerolog.New(os.Stdout).Level(zerolog.InfoLevel).With().Timestamp().Logger()
+	var logger zerolog.Logger
+
+	logFile, err := os.OpenFile("gateway.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
+	if err != nil {
+		logger = zerolog.New(os.Stdout).Level(zerolog.InfoLevel).With().Timestamp().Logger()
+	} else {
+		logger = zerolog.New(logFile).Level(zerolog.InfoLevel).With().Timestamp().Logger()
+	}
+
+	defer logFile.Close()
+
 	bgCtx := context.Background()
 
 	tracer, err := tracer.InitHttpTracer(

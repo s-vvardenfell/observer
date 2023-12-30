@@ -3,23 +3,28 @@
 
 убрать container_name везде или добавить всем (убрать лучше)
 
-экспорт метрик
+экспорт логов
 
 заменить jaeger-all-in-one на неск контейнеров
-  образы/контейнеры нашел/запустил, но не достучался с сервисов до jaeger-agent
-  cassandra долго поднимается, сыпятся ошибки в зависимых сервисах попыток реконнекта, но это само проходит
-  ДОБАВИТЬ В NETWORK!
+  видимо, нужно подобрать правильный порт - анализ go-кода из примера 
+    https://github.com/jaegertracing/jaeger/tree/main/docker-compose
+    надо понять, куда отпр трейсинг
 
 убрать TODO
 линтер
 оформить README
+  расписать, что исп-ся для трейсинга, логов и тд 
+    например, что логи сделаны через чтение logstash файла с логами
 
 трейсинг
 https://devandchill.com/posts/2021/12/go-step-by-step-guide-for-implementing-tracing-on-a-microservices-architecture-1/2/
 метрики
+
 экспорт логов
 https://blog.logrocket.com/using-elasticsearch-logstash-and-kibana-with-go-applications/
-
+https://logz.io/blog/golang-logs/
+https://dev.to/karanjagtiani/send-logs-from-go-to-logstash-in-the-elk-stack-with-docker-setup-16eo
+https://github.com/leozz37/golang-elk-example/blob/main/main.go
 
 
 curl -X POST "http://127.0.0.1:1323/storage" --header 'Content-Type: application/json' --data-raw '{
